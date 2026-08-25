@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ingredient Specification Process Workflow</title>
+<style>
+:root{
+  --bg:#f7f9fc; --panel:#ffffff; --text:#202936; --muted:#687586; --line:#aeb8c4; --border:#d8e0e8;
+  --pre:#dceff6; --draft:#e8f0d8; --api:#f4d9d9; --internal:#fff1c9; --external:#e9e2f2;
+  --cr:#dfeef3; --final:#dcebf0; --comm:#f7dfcb; --review:#1769aa; --approve:#6d7c35;
+  --feedback:#8b4141; --feedback-bg:#fbeaea;
+}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;overflow-x:hidden;background:var(--bg);color:var(--text);font-family:Inter,"Segoe UI",Arial,sans-serif}
+body{padding:14px}.page{width:min(100%,1500px);margin:0 auto}
+.header{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;margin-bottom:10px}
+h1{margin:0;font-size:clamp(19px,1.9vw,28px);letter-spacing:-.02em}
+.sub{margin-top:4px;color:var(--muted);font-size:11px}
+.legend{display:flex;gap:10px;flex-wrap:wrap;font-size:10px;color:var(--muted)}
+.legend span{display:flex;align-items:center;gap:5px}.legend i{width:9px;height:9px;border-radius:2px;display:inline-block}
+.shell{background:#fff;border:1px solid var(--border);border-radius:16px;padding:72px 14px 14px;box-shadow:0 3px 14px rgba(0,0,0,.04)}
+.main-flow{display:grid;grid-template-columns:46px repeat(8,minmax(0,1fr)) 46px;gap:6px;align-items:start;width:100%}
+.terminal{width:42px;height:34px;align-self:center;justify-self:center;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;border:1px solid #bec7d0;background:#eef2f5}
+.stage-col{min-width:0;position:relative}
+.stage-col:not(:last-of-type)::after{content:"→";position:absolute;right:-9px;top:23px;color:#7f8b98;font-size:14px;font-weight:800;z-index:4}
+.stage{min-height:54px;border:1px solid #aeb7c1;border-radius:6px;padding:7px 5px;text-align:center;display:flex;flex-direction:column;justify-content:center;font-size:clamp(9px,.72vw,11.5px);font-weight:800;line-height:1.15}
+.pre{background:var(--pre)}.draft{background:var(--draft)}.api{background:var(--api)}.internal{background:var(--internal)}
+.external{background:var(--external)}.cr{background:var(--cr)}.final{background:var(--final)}.comm{background:var(--comm)}
+.tasks{margin-top:8px;display:grid;gap:5px}
+.task{min-height:34px;background:#fff;border:1px solid #cbd3db;border-radius:4px;padding:5px;font-size:clamp(7px,.55vw,9px);line-height:1.2;text-align:center;display:flex;align-items:center;justify-content:center;position:relative}
+.task + .task::before{content:"";position:absolute;top:-6px;left:50%;width:1px;height:6px;background:#b9c2cb}
+.review-col{padding-top:0}
+.floating-approval{
+  position:absolute;
+  top:-58px;
+  left:50%;
+  width:48px;
+  height:48px;
+  background:#eef2dc;
+  border:1px solid #8b9558;
+  transform:translateX(-50%) rotate(45deg);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:6;
+}
+.floating-approval span{
+  transform:rotate(-45deg);
+  text-align:center;
+  font-size:6.7px;
+  font-weight:800;
+  line-height:1.05;
+  width:42px;
+}
+
+.feedback-task{background:var(--review);color:#fff;border-color:#0f5d98;font-weight:700}
+.sequence-note{margin-top:10px;text-align:center;font-size:8.8px;font-weight:800;color:#596675;letter-spacing:.02em}
+.loop-zone{margin-top:8px;border-top:1px dashed #d3d9df;padding-top:10px}
+.loop-title{text-align:center;font-size:9px;font-weight:800;letter-spacing:.06em;color:var(--feedback);margin-bottom:7px}
+.loop-grid{display:grid;grid-template-columns:46px repeat(8,minmax(0,1fr)) 46px;gap:6px}
+.loop-card{border:1px solid #e5c8c8;background:var(--feedback-bg);color:#663333;border-radius:6px;padding:7px;font-size:8.5px;line-height:1.25;min-height:56px}
+.loop-card strong{display:block;font-size:9px;margin-bottom:3px}
+.loop-card.internal-loop{grid-column:5}.loop-card.external-loop{grid-column:6}.loop-card.final-loop{grid-column:8}
+.returnbar{grid-column:5/9;background:#fff7f7;border:1px solid #e3bcbc;color:var(--feedback);border-radius:999px;text-align:center;padding:6px 8px;font-size:8.5px;font-weight:800}
+.footer-note{margin-top:8px;text-align:center;color:var(--muted);font-size:9px}
+@media(max-width:1180px){
+  body{padding:10px}.shell{padding:68px 10px 10px}
+  .main-flow,.loop-grid{grid-template-columns:38px repeat(8,minmax(0,1fr)) 38px;gap:4px}
+  .terminal{width:36px;height:30px;font-size:8px}.stage{padding:6px 3px;min-height:50px}.task{padding:4px 3px}
+  .stage-col:not(:last-of-type)::after{right:-7px;font-size:12px}
+}
+@media(max-width:900px){
+  .main-flow{grid-template-columns:40px repeat(4,minmax(0,1fr));grid-auto-rows:auto;gap:7px}
+  .start{grid-column:1;grid-row:1}.s1{grid-column:2;grid-row:1}.s2{grid-column:3;grid-row:1}.s3{grid-column:4;grid-row:1}.s4{grid-column:5;grid-row:1}
+  .s5{grid-column:5;grid-row:2}.s6{grid-column:4;grid-row:2}.s7{grid-column:3;grid-row:2}.s8{grid-column:2;grid-row:2}.end{grid-column:1;grid-row:2}
+  .stage-col::after{display:none!important}
+  .floating-approval{display:none}
+  .shell{padding-top:10px}
+  .loop-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .loop-card.internal-loop,.loop-card.external-loop,.loop-card.final-loop{grid-column:auto}
+  .returnbar{grid-column:1/-1}
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="header">
+    <div>
+      <h1>Ingredient Specification Process Workflow</h1>
+      <div class="sub">Clean horizontal workflow with review feedback loops routed back to Internal Review</div>
+    </div>
+    <div class="legend">
+      <span><i style="background:#315f7b"></i>Main process</span>
+      <span><i style="background:#1769aa"></i>Change / feedback point</span>
+      <span><i style="background:#6d7c35"></i>Approval checkpoint</span>
+    </div>
+  </div>
+
+  <section class="shell">
+    <div class="main-flow">
+      <div class="terminal start">START</div>
+
+      <div class="stage-col s1">
+        <div class="stage pre">Pre-Drafting</div>
+        <div class="tasks">
+          <div class="task">Determine Scope</div>
+          <div class="task">Check API Assessment Requirement</div>
+          <div class="task">Review DevEx Project</div>
+          <div class="task">Pull Reference Documents from M-Files</div>
+          <div class="task">Update Incoming Acceptance Document Tracker</div>
+        </div>
+      </div>
+
+      <div class="stage-col s2">
+        <div class="stage draft">Drafting</div>
+        <div class="tasks">
+          <div class="task">Draft ICS using latest ICS Template or Redline</div>
+          <div class="task">Draft DRJ</div>
+          <div class="task">Draft ISRF AN11-99-002-F-001</div>
+        </div>
+      </div>
+
+      <div class="stage-col s3">
+        <div class="stage api">API Assessment<br>(if required)</div>
+        <div class="tasks">
+          <div class="task">Reference Incoming Acceptance Document Tracker</div>
+          <div class="task">If required, reference Zwolle API Review Job Aid</div>
+        </div>
+      </div>
+
+      <div class="stage-col s4 review-col">
+        <div class="floating-approval internal-approval"><span>Internal<br>Approval</span></div>
+        <div class="stage internal">Internal Review</div>
+        <div class="tasks">
+          <div class="task">Send Internal Review Email to ISRF Contacts</div>
+          <div class="task">Collect Feedback from Internal Team</div>
+          <div class="task feedback-task">Changes Required?</div>
+          <div class="task">Make Changes According to Feedback</div>
+          <div class="task">Align on Changes and Update Drafts</div>
+          <div class="task">Update DRJ for New Changes (if required)</div>
+        </div>
+      </div>
+
+      <div class="stage-col s5 review-col">
+        <div class="floating-approval external-approval"><span>External<br>Approval</span></div>
+        <div class="stage external">External Review</div>
+        <div class="tasks">
+          <div class="task">Identify Supplier Contacts</div>
+          <div class="task">Send ICS Draft (PDF, Watermark)</div>
+          <div class="task">Collect Supplier Feedback</div>
+          <div class="task feedback-task">Supplier Requests Changes?</div>
+          <div class="task">Resolve Pushback / Align Changes</div>
+          <div class="task">Update DRJ for New Changes (if required)</div>
+        </div>
+      </div>
+
+      <div class="stage-col s6">
+        <div class="stage cr">CR Initiation</div>
+        <div class="tasks">
+          <div class="task">Create CR and Add DRJ in M-Files</div>
+          <div class="task">Link CR to RMTM or CP (if applicable)</div>
+          <div class="task">Route CR to Regulatory Review</div>
+          <div class="task">Route CR to Doc Centre for Approval</div>
+          <div class="task feedback-task">CR Requests Changes?</div>
+        </div>
+      </div>
+
+      <div class="stage-col s7">
+        <div class="stage final">Final Approval of ICS</div>
+        <div class="tasks">
+          <div class="task">Review Final Draft for Clean Sign-Off</div>
+          <div class="task">Confirm Signed Document with AN Procurement</div>
+          <div class="task">Send Supplier-Signed Drafts to Doc Centre</div>
+          <div class="task feedback-task">Supplier / Approver Requests Changes?</div>
+          <div class="task">GSQA and Purchasing Review, Sign and Approve CR</div>
+          <div class="task">Doc Centre Attaches Final Draft to CR and Closes CR</div>
+        </div>
+      </div>
+
+      <div class="stage-col s8">
+        <div class="stage comm">Final Communication</div>
+        <div class="tasks">
+          <div class="task">Confirm Supplier Notification</div>
+          <div class="task">Notify Internal Purchasing Coordinator</div>
+          <div class="task">Complete Closeout Document</div>
+        </div>
+      </div>
+
+      <div class="terminal end">END</div>
+    </div>
+
+
+    <div class="sequence-note">
+      API Assessment → Internal Review → External Review → CR Initiation  •  Approval checkpoints shown above the review stages
+    </div>
+
+    <div class="loop-zone">
+      <div class="loop-title">FEEDBACK / REWORK LOOPS</div>
+      <div class="loop-grid">
+        <div class="loop-card internal-loop"><strong>Internal Review</strong>If Internal Team feedback requires changes → update documents → loop back to Internal Review.</div>
+        <div class="loop-card external-loop"><strong>External Review</strong>If supplier feedback requires changes → update / align package → return to Internal Review.</div>
+        <div class="loop-card final-loop"><strong>Final Approval</strong>If supplier or approver requests changes → update package → return to Internal Review.</div>
+        <div class="returnbar">ANY REQUIRED CHANGE → UPDATE ICS / DRJ AS NEEDED → RETURN TO INTERNAL REVIEW → CONTINUE FORWARD AFTER RE-REVIEW</div>
+      </div>
+    </div>
+
+    <div class="footer-note">Designed to fit a standard laptop screen without right-side scrolling; narrow screens automatically reflow into two rows.</div>
+  </section>
+</div>
+</body>
+</html>
